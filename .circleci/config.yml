@@ -2,6 +2,12 @@
 # See: https://circleci.com/docs/2.0/configuration-reference
 version: 2.1
 
+# Use a package of configuration called an orb.
+orbs:
+  # Declare a dependency on the welcome-orb
+  welcome: circleci/welcome-orb@0.4.1
+# Orchestrate or schedule a set of jobs
+#
 # Define a job to be invoked later in a workflow.
 # See: https://circleci.com/docs/2.0/configuration-reference/#jobs
 jobs:
@@ -17,10 +23,40 @@ jobs:
       - run:
           name: "Say hello"
           command: "echo Hello, World!"
-
+  print_hello:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - run:
+          name: "Print hello"
+          command: echo "hello"
+  print_world:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - run: echo "world"
+  pipeline:
+    docker:
+      - image: cimg/base:stable
+    steps:
+      - checkout
+      - run: echo "My pipeline id is << pipeline.id >> and my git branch is << pipeline.git.branch >>."
+      - run: echo "My pipeline number is << pipeline.number >>"
+      - run: echo "My triggering git even url is << pipeline.project.git_url >>"
+      - run: echo "My project type is << pipeline.project.type >>"
 # Invoke jobs via workflows
 # See: https://circleci.com/docs/2.0/configuration-reference/#workflows
 workflows:
   say-hello-workflow:
     jobs:
+      - welcome/run
       - say-hello
+      - print_hello:
+          requires: [say-hello]
+      - print_world:
+          requires:
+            - print_hello
+      - pipeline
+
